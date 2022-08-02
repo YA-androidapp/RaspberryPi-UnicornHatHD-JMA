@@ -34,6 +34,12 @@ def format_date(dt):
     )
 
 
+def set_xy_color(x, y, r, g, b):
+    u_width, u_height = unicornhathd.get_shape()
+    unicornhathd.set_pixel(u_width - 1 - x, y, r, g, b)
+    unicornhathd.show()
+
+
 def get_pref(area_id, i):
     response = requests.get(JMA_JSON_BASEURL + area_id + '.json')
 
@@ -67,14 +73,12 @@ def get_pref(area_id, i):
                     weather_colors = [JMA_COLORS[n] for n in area['weatherCodes']]
                     for j, col in enumerate(weather_colors):
                         print((j, i), col)
-                        unicornhathd.set_pixel(i, j, *col)
-                        unicornhathd.show()
+                        set_xy_color(j, i, *col)
 
 
 if __name__ == '__main__':
     unicornhathd.rotation(0)
     unicornhathd.brightness(0.6)
-    u_width, u_height = unicornhathd.get_shape()
 
     try:
         for i, area_id in enumerate(JMA_AREA.keys()):
