@@ -40,40 +40,37 @@ def set_xy_color(x, y, r, g, b):
     unicornhathd.show()
 
 
-def get_pref(area_id, i):
+def get_pref(area_id):
     response = requests.get(JMA_JSON_BASEURL + area_id + '.json')
 
     if response.status_code != 200:
-        sys.exit()
+        return {}
 
     data = json.loads(response.text, object_pairs_hook=OrderedDict)
 
     times = []
+    area_name_wc = []
+    weather_icons = []
+    weather_telops = []
 
     area_publishing_office = ''
     for area in data:
         for ts in area['timeSeries']:
             if len(ts['timeDefines']) == 7:
-                if i == 0 and len(times) == 0:
-                    times = [format_date(n) for n in ts['timeDefines']]
-                    print('times', ' '.join(times), '\n')
-
-                area_name_wc = []
-                weather_icons = []
-                weather_telops = []
-
+                times = [format_date(n) for n in ts['timeDefines']]
                 area = ts['areas'][0]
                 if 'weatherCodes' in area:
                     area_name_wc = area['area']['name']
-                    print('area_name_wc', area_name_wc, i)
-
                     weather_telops = [JMA_TELOPS[n] for n in area['weatherCodes']]
-                    print('weather_telops', ' '.join(weather_telops))
-
                     weather_colors = [JMA_COLORS[n] for n in area['weatherCodes']]
-                    for j, col in enumerate(weather_colors):
-                        print((j, i), col)
-                        set_xy_color(j, i, *col)
+
+    return {
+        "id": area_id,
+        "times": times,
+        "pref": area_name_wc,
+        "telops": weather_telops,
+        "colors": weather_colors
+    }
 
 
 if __name__ == '__main__':
@@ -82,7 +79,9 @@ if __name__ == '__main__':
 
     try:
         for i, area_id in enumerate(JMA_AREA.keys()):
-            get_pref(area_id, i)
+            print(
+                get_pref(area_id)
+            )
 
         time.sleep(300)
 
