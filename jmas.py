@@ -15,6 +15,7 @@ except ImportError:
 
 from collections import OrderedDict
 from datetime import datetime
+import itertools
 import json
 import os
 import requests
@@ -22,6 +23,7 @@ import sys
 import time
 
 from const import JMA_AREA, JMA_ICON_BASEURL, JMA_COLORS, JMA_JSON_BASEURL, JMA_TELOPS
+from kanto import MAP_POINTS, SEA_POINT
 
 
 def format_date(dt):
@@ -32,12 +34,6 @@ def format_date(dt):
         ),
         '%m/%d'
     )
-
-
-def set_xy_color(x, y, r, g, b):
-    u_width, u_height = unicornhathd.get_shape()
-    unicornhathd.set_pixel(u_width - 1 - x, y, r, g, b)
-    unicornhathd.show()
 
 
 def get_pref(area_id):
@@ -65,8 +61,8 @@ def get_pref(area_id):
                     weather_colors = [JMA_COLORS[n] for n in area['weatherCodes']]
 
     return {
-        "id": area_id,
         "times": times,
+        "area_id": area_id,
         "pref": area_name_wc,
         "telops": weather_telops,
         "colors": weather_colors
@@ -74,16 +70,38 @@ def get_pref(area_id):
 
 
 if __name__ == '__main__':
-    unicornhathd.rotation(0)
+    unicornhathd.rotation(90)
     unicornhathd.brightness(0.6)
+    u_width, u_height = unicornhathd.get_shape()
+
+    for x, y in itertools.product(range(u_width), range(u_height)):
+        unicornhathd.set_pixel(x, y, 0, 100, 0)
+
+    for (x, y) in SEA_POINT:
+        unicornhathd.set_pixel(x, y, 0, 0, 102)
 
     try:
-        for i, area_id in enumerate(JMA_AREA.keys()):
-            print(
+        results = []
+        for area_id in JMA_AREA.keys():
+            results.append(
                 get_pref(area_id)
             )
 
-        time.sleep(300)
+        for j in range(7):
+            for jj in range(j+1):
+                unicornhathd.set_pixel(jj, 15, 255, 127, 127)
+            unicornhathd.show()
+
+            for i, area_id in enumerate(JMA_AREA.keys()):
+                col = [ item for item in results if item['area_id'] == area_id ][0]['colors'][j]
+                for (x, y) in MAP_POINTS.get(area_id):
+                    unicornhathd.set_pixel(x, y, *col)
+            unicornhathd.show()
+            time.sleep(3)
+
+            for jj in range(j+1):
+                unicornhathd.set_pixel(jj, 15, 0, 0, 0)
+            unicornhathd.show()
 
         unicornhathd.off()
     except KeyboardInterrupt:
